@@ -77,3 +77,159 @@ public class SpringMvcInit extends AbstractAnnotationConfigDispatcherServletInit
     }
 }
 ```
+## P103：Web容器初始化原理
+### 1. Web容器初始化原理
+* AbstractAnnotationConfigDispatcherServletInitializer间接实现了WebApplicationInitializer接口进行IoC容器初始化
+```java
+public class SpringMvcInit extends AbstractAnnotationConfigDispatcherServletInitializer {
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[0];
+    }
+
+    //设置项目对应的配置类
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{MvcConfig.class};
+    }
+
+    //配置springmvc自带servlet的访问地址
+    @Override
+    protected String[] getServletMappings() {
+        return new String[] {"/"};
+    }
+}
+
+public class Main implements WebApplicationInitializer {
+    @Override
+    public void onStartup(ServletContext servletContext) throws ServletException {
+        //只要web程序一启动就会执行此方法
+        System.out.println("web程序启动了");
+        //IoC容器初始化
+    }
+}
+```
+## P104：SpringMVC路径设置注解
+### 1. 设置访问路径
+* @RequestMapping注解作用是将请求的URL地址和处理请求的方式handler方法关联 建立映射关系
+```java
+@Controller
+@RequestMapping("/user")    //指定UserController开头地址
+public class UserController {
+
+    //handler -> handlerMapping 每一个方法就是一个handler 将handler注册到handlerMapping并且指定访问地址
+
+    /**
+     * @WebServlet("/必须斜杠开头")
+     * @RequestMapping("非必须斜杠开头")
+     * 1. 精准地址[一个/多个] /user/login, {"地址1", "地址2"}
+     * 2. 支持模糊地址 [*任意一层字符串 /user/*, **任意多层字符串 /user/**]
+     * 3. 类上添加@RequesstMapping 提取通用访问地址 见第7行
+     * 4. 请求方式指定
+     *    客户端 -> http(get | post | put | delete) -> ds -> handler
+     *    默认只要地址正确任何请求方式都可以访问
+     *    指定请求方式：method = RequestMethod.GET
+     *        @RequestMapping(value = "/login", method = RequestMethod.GET)
+     *    不符合请求方式：405异常!
+     * 5. 注解进阶(只能使用在方法上)
+     *    @GetMapping
+     *    @PostMapping
+     *    @PutMapping
+     *    @DeleteMapping
+     * @return
+     */
+    @RequestMapping(value = "/login", method = RequestMethod.POST)//类 接口 方法 作用：将handler注册到handlerMapping
+    public String login() {
+        return "login";
+    }
+
+    @RequestMapping(value = "/register", method = RequestMethod.GET)
+    public String register() {
+        return "register";
+    }
+
+    @RequestMapping
+    public String index() {
+        return "index";
+    }
+}
+```
+## P105：json和param对比
+### 参数对比
+* param 参数
+```
+key = value & key = value
+```
+* json
+```json
+{
+  "key": "value",
+  "key": "value"
+}
+```
+1. 参数编码：
+   * param类型的参数会被编码为ASCII
+   * JSON类型参数会被编码为UTF-8
+2. 参数顺序
+   * param类型的参数没有顺序限制
+   * JSON类型的参数是有序的，JSON采用键值对的形式进行传递
+3. 数据类型
+   * param只支持字符串参数
+   * JSON支持任意数据类型 [数组、对象、数据类型] 可以无限嵌套
+## P106：参数接收
+```java
+@Controller
+@RequestMapping("param")
+public class ParamController {
+    //直接接收 /param/data?name=zhangsan&age=19
+    //形参列表填写对应名称的参数即可
+    //1. 名称相同
+    //2. 可以不传递 不报错
+    @RequestMapping("data")
+    @ResponseBody
+    public String data(String name, int age) {
+        System.out.println("name: " + name);
+        System.out.println("name: " + name + " age: " + age);
+        return "name: " + name + " age: " + age;
+    }
+
+    //注解指定 /param/data1?account=root&page=1
+    // account 必须传递
+    // page 可以不传递 默认值1
+    // @RequestParam(value = "指定参数名 如果和请求参数名一样可以忽略",required = "是否必须传递true/false", defaultValue = "默认值")
+    @GetMapping("data1")
+    @ResponseBody
+    public String data1(@RequestParam(value = "account") String account, @RequestParam(value = "page", required = false, defaultValue = "1") Integer page) {
+        System.out.println("account: " + account + " page: " + page);
+        return "account: " + account + " page: " + page;
+    }
+    //特殊值
+    //一名多值 key=1&key=2 直接使用集合接收
+    //param/data2/hbs=吃饭&hbs=睡觉&hbs=打豆豆
+    //集合必须加@RequestParam 如果不加会将对应的字符串赋值给集合 导致类型错误
+    @GetMapping("data2")
+    @ResponseBody
+    public String data2(@RequestParam("hbs") List<String>[] hbs) {
+        for (List<String> hb : hbs) {
+            System.out.println(hb);
+        }
+        return "hbs: " + hbs;
+    }
+
+    //使用实体对象接收值
+    //param/data3?name=zhangsan&age=19
+
+    /**
+     * user的属性名必须要等于参数名
+     * 默认值直接在属性上设置 private String name = "张三";
+     * @param user
+     * @return
+     */
+    @RequestMapping("data3")
+    @ResponseBody
+    public String data3(User user) {
+        System.out.println(user);
+        return user.toString();
+    }
+}
+```

@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>springmvc-base-quic-01</module>
+        <module>spirngmvc-base-input-02</module>
     </modules>
 
     <properties>
@@ -38,6 +39,23 @@
             <artifactId>spring-webmvc</artifactId>
             <version>6.1.3</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.32</version>
+        </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

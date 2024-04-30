@@ -11,6 +11,8 @@
     <modules>
         <module>springmvc-base-quic-01</module>
         <module>spirngmvc-base-input-02</module>
+        <module>springmvc-base-output-03</module>
+        <module>springmvc-high-other-05</module>
     </modules>
 
     <properties>

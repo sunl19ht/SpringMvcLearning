@@ -349,3 +349,91 @@ public class ApiController {
     }
 }
 ```
+## P112：共享域对象操作
+* 一种数据间接传递的手段
+```java
+@Controller
+@RequestMapping("share")
+@ResponseBody
+public class ShareController {
+    //原生API
+    @Autowired
+    private ServletContext servletContext;
+
+    //原生api
+    public void data(HttpServletRequest request, HttpSession session) {
+
+    }
+}
+```
+## P117：返回JSON数据
+* @ResponseBody注解
+```java
+package com.sunl19ht.controller;
+
+import com.sunl19ht.pojo.User;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Controller
+@RequestMapping("json")
+public class JsonController {
+
+    @GetMapping("data")
+    @ResponseBody   //数据直接返回 不返回视图
+    public User data() {
+        User user = new User();
+        user.setName("to dogs");
+        user.setAge(18);
+        return user; //user -> handlerAdapter -> json @ResponseBody -> json直接返回
+    }
+
+    @GetMapping("data1")
+    @ResponseBody
+    public List<User> data1() {
+        User user = new User();
+        user.setName("to dogs");
+        user.setAge(18);
+        ArrayList<User> users = new ArrayList<>();
+        users.add(user);
+        return users;
+    }
+}
+```
+## P123：全局异常处理类
+```java
+/**
+ * 全局异常处理器
+ */
+// @ControllerAdvice //全局异常发生会走此类下的handler方法 可以返回逻辑视图 可以转发和重定向
+@RestControllerAdvice   //ResponseBody + ControllerAdvice 直接返回json字符串
+public class GlobalExceptionHandler {
+    //算数异常处理
+    @ExceptionHandler(ArithmeticException.class) //捕获异常
+    public Object ArithmeticExceptionHandler(ArithmeticException e) {   //接收异常
+        //自定义处理
+        System.out.println(e.getMessage());
+        return "算数异常";
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public Object NullPointerExceptionHandler(NullPointerException e) {
+        //自定义处理
+        System.out.println(e.getMessage());
+        return "空指针异常";
+    }
+
+    @ExceptionHandler(Exception.class)
+    public Object ExceptionHandler(Exception e) {
+        //自定义处理
+        String message = e.getMessage();
+        System.out.println(message);
+        return message;
+    }
+}
+```

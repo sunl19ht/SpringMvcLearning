@@ -233,3 +233,119 @@ public class ParamController {
     }
 }
 ```
+## P107：路径传参
+### 路径接收参数
+格式：http://localhost:8080/path/user/zhangsan/19
+1. 设置动态路径 接收动态路径
+```java
+@RequestMapping("{account}/{password}")
+public String login(@PathVariable String account, @PathVariable String password) { //接收动态参数public String login(String account, String password) { //接收动态参数
+    return null;
+}
+```
+## P108：JSON接收
+* JSON必须使用POST方式
+```java
+@RequestMapping("json")
+@Controller
+@ResponseBody
+public class JsonController {
+    //data -> 请求体 post{name, age, gender}
+    /**
+     * 报错415
+     * 原因：Java原生api不支持接收json数据
+     * 解决：1.导入Json处理的依赖 2. handlerAdapter配置json转化器
+     * @param person
+     * @return
+     */
+    @PostMapping("data")
+    public String data(@RequestBody Person person) {
+        System.out.println(person.toString());
+        return person.toString();
+    }
+}
+```
+* 定义一个实体类接收JSON数据
+```java
+public class Person {
+    private String name;
+    private Integer age;
+    private String gender;
+}
+```
+* 使用@RequestBody注解
+```java
+public String data(@RequestBody Person person) {}
+```
+* 报错415
+   * 报错415
+   * 原因：Java原生api不支持接收json数据
+   * 解决：1.导入Json处理的依赖 2. handlerAdapter配置json转化器
+* 导入jackson
+```xml
+<dependency>
+   <groupId>com.fasterxml.jackson.core</groupId>
+   <artifactId>jackson-databind</artifactId>
+   <version>2.15.0</version>
+</dependency>
+```
+* handlerAdapter配置json转化器
+  * MvcConfig上添加 @EnableWebMvc 注解
+* 添加了@EnableWebMvc之后会自动添加RequestMappingHandlerMapping 和 RequestMappingHandlerAdapter
+## P110：接收请求头和cookie
+* cookie获取
+```java
+@Controller
+@RequestMapping("cookie")
+@ResponseBody
+public class CookieController {
+    @RequestMapping("data")
+    public String data(@CookieValue(value = "cookieName") String value) {
+        System.out.println(value);
+        return value;
+    }
+
+    @GetMapping("save")
+    public String save(HttpServletResponse response) {
+        Cookie cookie = new Cookie("cookieName", "root");
+        response.addCookie(cookie);
+        return "ok";
+    }
+}
+```
+* header请求头获取
+```java
+@Controller
+@RequestMapping("header")
+@ResponseBody
+public class HeaderController {
+
+    @GetMapping("data")
+    public String data(@RequestHeader("Host") String host) {
+        System.out.println(host);
+        return host;
+    }
+}
+```
+## P111：原生对象获取
+| Controller method argument             | Description              |
+|----------------------------------------|--------------------------|
+| jakarta.servlet.ServletRequest         | 请求/响应对象                  |
+| jakarta.servlet.ServletResponse        |                          |
+| jakarta.servlet.http.HttpSession       | 强制会话存在                   |
+| java.io.InputStream<br/>java.io.Reader | 用于访问Servlet API公开的原始请求正文 |
+| java.io.OutputStream<br/>java.io.Writer | 用于访问Servlet API公开的原始响应正文 |
+```java
+public class ApiController {
+
+    @Autowired
+    private ServletContext servletContext;
+    public void data(HttpServletResponse response,
+                     HttpServletRequest request,
+                     HttpSession session) {
+        //使用原生对象就可以获取
+        ServletContext servletContext = request.getServletContext();
+        ServletContext servletContext1 = session.getServletContext();
+    }
+}
+```
